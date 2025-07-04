@@ -22,6 +22,19 @@
                 }
             }
         }
+    // 新增的登录和导入功能代码
+    document.getElementById('login-btn').addEventListener('click', loginAndImportGrades);
+    document.getElementById('captcha-img').addEventListener('load', () => {
+        document.getElementById('captcha-container').classList.remove('hidden');
+    });
+
+    // 刷新验证码
+    function refreshCaptcha() {
+        document.getElementById('captcha-img').src = '/api/captcha?t=' + Date.now();
+    }
+
+    // 登录并导入成绩
+    async function loginAndImportGrades() { /* ... */ }
     </script>
     <style type="text/tailwindcss">
         @layer utilities {
