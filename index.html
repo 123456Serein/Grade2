@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>绩点计算器</title>
+    <title>南京财经大学绩点计算器</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script>
@@ -22,19 +22,6 @@
                 }
             }
         }
-    // 新增的登录和导入功能代码
-    document.getElementById('login-btn').addEventListener('click', loginAndImportGrades);
-    document.getElementById('captcha-img').addEventListener('load', () => {
-        document.getElementById('captcha-container').classList.remove('hidden');
-    });
-
-    // 刷新验证码
-    function refreshCaptcha() {
-        document.getElementById('captcha-img').src = '/api/captcha?t=' + Date.now();
-    }
-
-    // 登录并导入成绩
-    async function loginAndImportGrades() { /* ... */ }
     </script>
     <style type="text/tailwindcss">
         @layer utilities {
@@ -58,8 +45,8 @@
             <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 animate-float">
                 <i class="fa fa-calculator text-2xl text-primary"></i>
             </div>
-            <h1 class="text-[clamp(1.8rem,5vw,2.5rem)] font-bold text-gray-800 mb-2">绩点计算器</h1>
-            <p class="text-neutral text-lg">轻松计算你的平均绩点</p>
+            <h1 class="text-[clamp(1.8rem,5vw,2.5rem)] font-bold text-gray-800 mb-2">南京财经大学绩点计算器</h1>
+            <p class="text-neutral text-lg">一键导入成绩，轻松计算平均绩点</p>
         </header>
 
         <main class="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-8">
@@ -72,13 +59,6 @@
                     <label for="school-password" class="block text-gray-700 font-medium mb-2">密码：</label>
                     <input type="password" id="school-password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all" placeholder="请输入教务系统密码">
                 </div>
-                <div class="mb-6" id="captcha-container">
-                    <label for="captcha" class="block text-gray-700 font-medium mb-2">验证码：</label>
-                    <div class="flex gap-3">
-                        <input type="text" id="captcha" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all" placeholder="请输入验证码">
-                        <img id="captcha-img" src="" alt="验证码" class="h-12 rounded-lg border cursor-pointer" onclick="refreshCaptcha()">
-                    </div>
-                </div>
                 <button id="login-btn" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg">
                     登录并导入成绩 <i class="fa fa-sign-in ml-2"></i>
                 </button>
@@ -87,7 +67,7 @@
             <div id="calculator-screen" class="hidden">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-xl font-semibold text-gray-800">
-                        <span>亲爱的</span><span id="user-display-name">同学</span>，<br>请输入课程信息
+                        <span id="user-display-name">同学</span>，请输入课程信息
                     </h2>
                     <span id="course-count" class="bg-secondary/10 text-secondary px-3 py-1 rounded-full text-sm font-medium">
                         已输入 0 门课程
@@ -160,13 +140,13 @@
                     </button>
                     <button id="share-btn" class="flex-1 bg-accent hover:bg-accent/90 text-white font-medium py-2.5 px-4 rounded-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg">
                         <i class="fa fa-share-alt mr-2"></i> 分享结果
-                    </button>
+                    </div>
                 </div>
             </div>
         </main>
 
         <footer class="text-center text-neutral text-sm">
-            <p>绩点计算器 &copy; 2025 | 一位拥有Jieba农场的码农</p>
+            <p>绩点计算器 &copy; 2025 | 基于南京财经大学教务系统</p>
         </footer>
     </div>
 
@@ -179,7 +159,8 @@
         const welcomeScreen = document.getElementById('welcome-screen');
         const calculatorScreen = document.getElementById('calculator-screen');
         const resultScreen = document.getElementById('result-screen');
-        const userNameInput = document.getElementById('user-name');
+        const schoolIdInput = document.getElementById('school-id');
+        const schoolPasswordInput = document.getElementById('school-password');
         const userDisplayName = document.getElementById('user-display-name');
         const courseNameInput = document.getElementById('course-name');
         const courseCreditInput = document.getElementById('course-credit');
@@ -193,19 +174,67 @@
         const totalCredits = document.getElementById('total-credits');
 
         // 按钮事件
-        document.getElementById('start-btn').addEventListener('click', startCalculator);
+        document.getElementById('login-btn').addEventListener('click', loginAndImportGrades);
         document.getElementById('add-course-btn').addEventListener('click', addCourse);
         document.getElementById('calculate-btn').addEventListener('click', calculateGPA);
         document.getElementById('recalculate-btn').addEventListener('click', resetCalculator);
         document.getElementById('share-btn').addEventListener('click', shareResult);
 
-        // 开始计算器
-        function startCalculator() {
-            userName = userNameInput.value.trim() || '同学';
-            userDisplayName.textContent = userName;
-            welcomeScreen.classList.add('hidden');
-            calculatorScreen.classList.remove('hidden');
-            updateCourseCount();
+        // 登录并导入成绩
+        async function loginAndImportGrades() {
+            const schoolId = schoolIdInput.value.trim();
+            const password = schoolPasswordInput.value.trim();
+            
+            if (!schoolId || !password) {
+                showToast('请输入学号和密码', 'error');
+                return;
+            }
+            
+            showToast('正在登录教务系统...', 'info');
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        schoolId,
+                        password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 清空现有课程
+                    courses = [];
+                    
+                    // 添加导入的课程
+                    data.grades.forEach(course => {
+                        courses.push({
+                            name: course.name,
+                            credit: parseFloat(course.credit),
+                            grade: parseFloat(course.grade)
+                        });
+                    });
+                    
+                    // 设置用户名（如果有）
+                    userDisplayName.textContent = data.userName || '同学';
+                    
+                    // 更新UI
+                    updateCourseList();
+                    updateCourseCount();
+                    welcomeScreen.classList.add('hidden');
+                    calculatorScreen.classList.remove('hidden');
+                    showToast(`成功导入 ${courses.length} 门课程成绩`, 'success');
+                } else {
+                    showToast(data.message || '登录失败，请重试', 'error');
+                }
+            } catch (error) {
+                showToast('网络错误，请重试', 'error');
+                console.error('登录出错:', error);
+            }
         }
 
         // 添加课程
@@ -312,7 +341,7 @@
             totalCredits.textContent = totalCredit.toFixed(1);
 
             // 根据绩点给出评价
-            if (gpa >= 4.5) {
+            if (gpa >= 4.0) {
                 gpaComment.textContent = '🎉 成绩优异，继续保持！';
                 gpaComment.className = 'text-lg font-medium text-green-600 mb-2';
             } else if (gpa >= 3.5) {
@@ -362,7 +391,7 @@
         // 分享结果
         function shareResult() {
             // 创建分享内容
-            let shareText = `📊 ${userName}的绩点计算结果\n\n`;
+            let shareText = `📊 我的南京财经大学绩点计算结果\n\n`;
             shareText += `平均绩点：${gpaValue.textContent}\n`;
             shareText += `课程数量：${totalCourses.textContent}门\n`;
             shareText += `总学分：${totalCredits.textContent}\n\n`;
@@ -373,6 +402,7 @@
             });
 
             shareText += `\n${gpaComment.textContent.replace(/(<([^>]+)>)/gi, "")}`;
+            shareText += `\n\n使用「南京财经大学绩点计算器」一键导入成绩计算：https://github.com/your-repo`;
 
             // 复制到剪贴板
             navigator.clipboard.writeText(shareText).then(() => {
