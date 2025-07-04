@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绩点计算器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        neutral: '#6B7280',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .animate-float {
+                animation: float 3s ease-in-out infinite;
+            }
+            @keyframes float {
+                0% { transform: translateY(0px); }
+                50% { transform: translateY(-10px); }
+                100% { transform: translateY(0px); }
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 to-purple-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-3xl">
+        <header class="text-center mb-10">
+            <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 animate-float">
+                <i class="fa fa-calculator text-2xl text-primary"></i>
+            </div>
+            <h1 class="text-[clamp(1.8rem,5vw,2.5rem)] font-bold text-gray-800 mb-2">绩点计算器</h1>
+            <p class="text-neutral text-lg">轻松计算你的平均绩点</p>
+        </header>
+
+        <main class="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-8">
+            <div id="welcome-screen">
+                <div class="mb-6">
+                    <label for="user-name" class="block text-gray-700 font-medium mb-2">请输入您的姓名：</label>
+                    <input type="text" id="user-name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all" placeholder="例如：张三">
+                </div>
+                <button id="start-btn" class="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 px-6 rounded-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg">
+                    开始计算 <i class="fa fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+
+            <div id="calculator-screen" class="hidden">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        <span id="user-display-name">同学</span>，请输入课程信息
+                    </h2>
+                    <span id="course-count" class="bg-secondary/10 text-secondary px-3 py-1 rounded-full text-sm font-medium">
+                        已输入 0 门课程
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <label for="course-name" class="block text-gray-700 font-medium mb-2 text-sm">课程名称</label>
+                        <input type="text" id="course-name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all" placeholder="例如：高等数学">
+                    </div>
+                    <div>
+                        <label for="course-credit" class="block text-gray-700 font-medium mb-2 text-sm">课程学分</label>
+                        <input type="number" id="course-credit" min="0.5" step="0.5" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all" placeholder="例如：4">
+                    </div>
+                    <div>
+                        <label for="course-grade" class="block text-gray-700 font-medium mb-2 text-sm">课程绩点</label>
+                        <input type="number" id="course-grade" min="0" max="5" step="0.1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all" placeholder="例如：4.5">
+                    </div>
+                </div>
+
+                <div class="flex gap-4 mb-8">
+                    <button id="add-course-btn" class="flex-1 bg-secondary hover:bg-secondary/90 text-white font-medium py-2.5 px-4 rounded-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg">
+                        <i class="fa fa-plus mr-2"></i> 添加课程
+                    </button>
+                    <button id="calculate-btn" class="flex-1 bg-primary hover:bg-primary/90 text-white font-medium py-2.5 px-4 rounded-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg">
+                        <i class="fa fa-calculator mr-2"></i> 计算绩点
+                    </button>
+                </div>
+
+                <div class="border-t pt-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">已输入课程</h3>
+                    <div id="course-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                        <div class="text-center text-neutral italic py-4">
+                            暂无课程信息
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="result-screen" class="hidden">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">计算结果</h2>
+                    <p class="text-neutral">以下是您的绩点统计信息</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                    <div class="flex flex-col items-center">
+                        <div class="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                            <div class="text-center">
+                                <span id="gpa-value" class="block text-4xl font-bold text-primary">0.00</span>
+                                <span class="text-sm text-neutral">平均绩点</span>
+                            </div>
+                        </div>
+                        <p id="gpa-comment" class="text-lg font-medium text-gray-800 mb-2"></p>
+                        <p class="text-neutral text-sm">基于 <span id="total-courses" class="font-medium">0</span> 门课程，总学分为 <span id="total-credits" class="font-medium">0</span></p>
+                    </div>
+                </div>
+
+                <div class="border-t pt-6">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">课程明细</h3>
+                    <div id="result-course-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                        <!-- 结果中的课程列表 -->
+                    </div>
+                </div>
+
+                <div class="mt-8 flex gap-4">
+                    <button id="recalculate-btn" class="flex-1 bg-primary hover:bg-primary/90 text-white font-medium py-2.5 px-4 rounded-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg">
+                        <i class="fa fa-refresh mr-2"></i> 重新计算
+                    </button>
+                    <button id="share-btn" class="flex-1 bg-accent hover:bg-accent/90 text-white font-medium py-2.5 px-4 rounded-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-lg">
+                        <i class="fa fa-share-alt mr-2"></i> 分享结果
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <footer class="text-center text-neutral text-sm">
+            <p>绩点计算器 &copy; 2025 | 一位拥有Jieba农场的码农</p>
+        </footer>
+    </div>
+
+    <script>
+        // 全局变量
+        let userName = '';
+        let courses = [];
+
+        // DOM元素
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const calculatorScreen = document.getElementById('calculator-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const userNameInput = document.getElementById('user-name');
+        const userDisplayName = document.getElementById('user-display-name');
+        const courseNameInput = document.getElementById('course-name');
+        const courseCreditInput = document.getElementById('course-credit');
+        const courseGradeInput = document.getElementById('course-grade');
+        const courseList = document.getElementById('course-list');
+        const resultCourseList = document.getElementById('result-course-list');
+        const courseCount = document.getElementById('course-count');
+        const gpaValue = document.getElementById('gpa-value');
+        const gpaComment = document.getElementById('gpa-comment');
+        const totalCourses = document.getElementById('total-courses');
+        const totalCredits = document.getElementById('total-credits');
+
+        // 按钮事件
+        document.getElementById('start-btn').addEventListener('click', startCalculator);
+        document.getElementById('add-course-btn').addEventListener('click', addCourse);
+        document.getElementById('calculate-btn').addEventListener('click', calculateGPA);
+        document.getElementById('recalculate-btn').addEventListener('click', resetCalculator);
+        document.getElementById('share-btn').addEventListener('click', shareResult);
+
+        // 开始计算器
+        function startCalculator() {
+            userName = userNameInput.value.trim() || '同学';
+            userDisplayName.textContent = userName;
+            welcomeScreen.classList.add('hidden');
+            calculatorScreen.classList.remove('hidden');
+            updateCourseCount();
+        }
+
+        // 添加课程
+        function addCourse() {
+            const name = courseNameInput.value.trim();
+            const credit = parseFloat(courseCreditInput.value);
+            const grade = parseFloat(courseGradeInput.value);
+
+            // 验证输入
+            if (!name) {
+                showToast('请输入课程名称', 'error');
+                return;
+            }
+
+            if (isNaN(credit) || credit <= 0) {
+                showToast('请输入有效的学分（大于0）', 'error');
+                return;
+            }
+
+            if (isNaN(grade) || grade < 0 || grade > 5) {
+                showToast('请输入有效的绩点（0-5之间）', 'error');
+                return;
+            }
+
+            // 添加课程到列表
+            courses.push({ name, credit, grade });
+
+            // 更新显示
+            updateCourseList();
+            updateCourseCount();
+
+            // 清空输入
+            courseNameInput.value = '';
+            courseCreditInput.value = '';
+            courseGradeInput.value = '';
+            courseNameInput.focus();
+
+            showToast('课程已添加', 'success');
+        }
+
+        // 更新课程列表显示
+        function updateCourseList() {
+            if (courses.length === 0) {
+                courseList.innerHTML = `
+                    <div class="text-center text-neutral italic py-4">
+                        暂无课程信息
+                    </div>
+                `;
+                return;
+            }
+
+            courseList.innerHTML = '';
+            courses.forEach((course, index) => {
+                const courseItem = document.createElement('div');
+                courseItem.className = 'bg-gray-50 rounded-lg p-3 flex items-center justify-between';
+                courseItem.innerHTML = `
+                    <div class="flex-1 mr-3">
+                        <div class="font-medium text-gray-800">${course.name}</div>
+                        <div class="text-sm text-neutral">学分: ${course.credit} | 绩点: ${course.grade}</div>
+                    </div>
+                    <button class="text-red-500 hover:text-red-700 transition-colors" onclick="removeCourse(${index})">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                `;
+                courseList.appendChild(courseItem);
+            });
+        }
+
+        // 移除课程
+        function removeCourse(index) {
+            courses.splice(index, 1);
+            updateCourseList();
+            updateCourseCount();
+            showToast('课程已移除', 'info');
+        }
+
+        // 更新课程计数
+        function updateCourseCount() {
+            courseCount.textContent = `已输入 ${courses.length} 门课程`;
+        }
+
+        // 计算GPA
+        function calculateGPA() {
+            if (courses.length === 0) {
+                showToast('请至少添加一门课程', 'error');
+                return;
+            }
+
+            // 计算总学分和加权绩点
+            let totalCredit = 0;
+            let weightedGrade = 0;
+
+            courses.forEach(course => {
+                totalCredit += course.credit;
+                weightedGrade += course.credit * course.grade;
+            });
+
+            // 计算平均绩点
+            const gpa = weightedGrade / totalCredit;
+
+            // 更新结果显示
+            gpaValue.textContent = gpa.toFixed(2);
+            totalCourses.textContent = courses.length;
+            totalCredits.textContent = totalCredit.toFixed(1);
+
+            // 根据绩点给出评价
+            if (gpa >= 4.5) {
+                gpaComment.textContent = '🎉 成绩优异，继续保持！';
+                gpaComment.className = 'text-lg font-medium text-green-600 mb-2';
+            } else if (gpa >= 3.5) {
+                gpaComment.textContent = '👍 表现良好，再接再厉！';
+                gpaComment.className = 'text-lg font-medium text-blue-600 mb-2';
+            } else if (gpa >= 2.0) {
+                gpaComment.textContent = '💪 仍需努力，加油！';
+                gpaComment.className = 'text-lg font-medium text-orange-600 mb-2';
+            } else {
+                gpaComment.textContent = '🙁 成绩偏低，建议加强学习';
+                gpaComment.className = 'text-lg font-medium text-red-600 mb-2';
+            }
+
+            // 显示结果课程列表
+            resultCourseList.innerHTML = '';
+            courses.forEach(course => {
+                const courseItem = document.createElement('div');
+                courseItem.className = 'bg-gray-50 rounded-lg p-3 flex items-center justify-between';
+                courseItem.innerHTML = `
+                    <div class="flex-1 mr-3">
+                        <div class="font-medium text-gray-800">${course.name}</div>
+                        <div class="text-sm text-neutral">学分: ${course.credit} | 绩点: ${course.grade}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="font-medium text-gray-800">${(course.credit * course.grade).toFixed(2)}</div>
+                        <div class="text-xs text-neutral">加权分数</div>
+                    </div>
+                `;
+                resultCourseList.appendChild(courseItem);
+            });
+
+            // 切换到结果页面
+            calculatorScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+        }
+
+        // 重置计算器
+        function resetCalculator() {
+            courses = [];
+            updateCourseList();
+            updateCourseCount();
+            resultScreen.classList.add('hidden');
+            calculatorScreen.classList.remove('hidden');
+            showToast('计算器已重置', 'info');
+        }
+
+        // 分享结果
+        function shareResult() {
+            // 创建分享内容
+            let shareText = `📊 ${userName}的绩点计算结果\n\n`;
+            shareText += `平均绩点：${gpaValue.textContent}\n`;
+            shareText += `课程数量：${totalCourses.textContent}门\n`;
+            shareText += `总学分：${totalCredits.textContent}\n\n`;
+            shareText += `课程明细：\n`;
+
+            courses.forEach(course => {
+                shareText += `- ${course.name}：学分${course.credit}，绩点${course.grade}\n`;
+            });
+
+            shareText += `\n${gpaComment.textContent.replace(/(<([^>]+)>)/gi, "")}`;
+
+            // 复制到剪贴板
+            navigator.clipboard.writeText(shareText).then(() => {
+                showToast('结果已复制到剪贴板', 'success');
+            }).catch(err => {
+                showToast('复制失败，请手动复制', 'error');
+                console.error('无法复制内容: ', err);
+            });
+        }
+
+        // 显示提示消息
+        function showToast(message, type = 'info') {
+            // 创建toast元素
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 opacity-0`;
+
+            // 设置不同类型的样式
+            if (type === 'success') {
+                toast.classList.add('bg-green-500', 'text-white');
+                toast.innerHTML = `<i class="fa fa-check-circle mr-2"></i> ${message}`;
+            } else if (type === 'error') {
+                toast.classList.add('bg-red-500', 'text-white');
+                toast.innerHTML = `<i class="fa fa-exclamation-circle mr-2"></i> ${message}`;
+            } else {
+                toast.classList.add('bg-blue-500', 'text-white');
+                toast.innerHTML = `<i class="fa fa-info-circle mr-2"></i> ${message}`;
+            }
+
+            // 添加到页面
+            document.body.appendChild(toast);
+
+            // 显示动画
+            setTimeout(() => {
+                toast.classList.remove('opacity-0');
+                toast.classList.add('opacity-100');
+            }, 10);
+
+            // 3秒后隐藏
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+
+                // 完全隐藏后移除元素
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+
+        // 允许在HTML中调用removeCourse函数
+        window.removeCourse = removeCourse;
+    </script>
+</body>
+</html>
